@@ -159,50 +159,48 @@ namespace ConsoleApp_ADS
 
         public List<Vertex> DepthFirstSearch(int VFrom, int VTo)
         {
-            List<Vertex> path = new List<Vertex>();
-            System.Collections.Generic.Stack<Vertex> stack = new System.Collections.Generic.Stack<Vertex>();
+            foreach (var v in vertex)
+                v.Hit = false;
 
-            int i = IndexOf(VFrom);
-            if (i == -1) return path;
+            List<Vertex> route = new List<Vertex>();
+            Stack<Vertex> stack = new Stack<Vertex>();
 
-            int j = IndexOf(VTo);
-            if (j == -1) return path;
+            var VertexFrom = vertex.ElementAt(VFrom);
+            var VertexTo = vertex.ElementAt(VTo);
 
-            vertex[i].Hit = true;
-            stack.Push(vertex[i]);
+            VertexFrom.Hit = true;
+            stack.Push(VertexFrom);
 
-            StartDepthFirstSearch(VTo, ref stack, ref path);
-            return path.Last().Value == VTo ? path : null;
+            while (stack.Count > 0) 
+            {
+                var currentVertex = stack.Pop();
+                route.Add(currentVertex);
+
+                if (currentVertex.Value == VertexTo.Value)
+                {
+                    return route;
+                }
+                var vertexNeighbors = GetVertexNeighbors(currentVertex.Value)
+                    .OrderByDescending(u => u.Value)
+                    .ToList();
+
+                vertexNeighbors.ForEach(v => stack.Push(v));
+            }
+
+            return route;
         }
-        private void StartDepthFirstSearch(int VTo, ref System.Collections.Generic.Stack<Vertex> stack, ref List<Vertex> path)
+        public List<Vertex> GetVertexNeighbors(int vertexIndex)
         {
-            if (stack.Count == 0) return;
-            var v = stack.Pop();
-            path.Add(v);
-
-            GetVertexEdgesD(v, ref stack, ref path, VTo);
-
-            StartDepthFirstSearch(VTo, ref stack, ref path);
-        }
-        private void GetVertexEdgesD(Vertex v, ref System.Collections.Generic.Stack<Vertex> stack, ref List<Vertex> path, int VTo)
-        {
+            List<Vertex> neighbors = new List<Vertex>();
             for (int i = 0; i < vertex.Length; i++)
             {
-                if (vertex[i].Hit == true) continue;
-
-                if (IsEdge(vertex[i].Value, v.Value))
+                if (IsEdge(vertexIndex, i) && vertex[i].Hit == false)
                 {
+                    neighbors.Add(vertex[i]);
                     vertex[i].Hit = true;
-                    stack.Push(vertex[i]);
-
-                    if (vertex[i].Value == VTo)
-                    {
-                        path.Add(vertex[i]);
-                        stack.Clear();
-                        break;
-                    }
                 }
             }
+            return neighbors;
         }
 
         public List<Vertex> BreadthFirstSearch(int VFrom, int VTo)

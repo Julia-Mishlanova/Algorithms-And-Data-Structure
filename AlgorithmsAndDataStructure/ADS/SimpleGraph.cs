@@ -171,7 +171,7 @@ namespace ConsoleApp_ADS
             VertexFrom.Hit = true;
             stack.Push(VertexFrom);
 
-            while (stack.Count > 0) 
+            while (stack.Count > 0)
             {
                 var currentVertex = stack.Pop();
                 route.Add(currentVertex);
@@ -180,7 +180,7 @@ namespace ConsoleApp_ADS
                 {
                     return route;
                 }
-                var vertexNeighbors = GetVertexNeighbors(currentVertex.Value)
+                var vertexNeighbors = GetVertexNeighbors(currentVertex)
                     .OrderByDescending(u => u.Value)
                     .ToList();
 
@@ -189,9 +189,11 @@ namespace ConsoleApp_ADS
 
             return route;
         }
-        public List<Vertex> GetVertexNeighbors(int vertexIndex)
+        private List<Vertex> GetVertexNeighbors(Vertex v)
         {
             List<Vertex> neighbors = new List<Vertex>();
+            int vertexIndex = Array.IndexOf(vertex, v);
+
             for (int i = 0; i < vertex.Length; i++)
             {
                 if (IsEdge(vertexIndex, i) && vertex[i].Hit == false)
@@ -202,54 +204,54 @@ namespace ConsoleApp_ADS
             }
             return neighbors;
         }
-
         public List<Vertex> BreadthFirstSearch(int VFrom, int VTo)
         {
-            List<Vertex> path = new List<Vertex>();
-            System.Collections.Generic.Queue<Vertex> queue = new System.Collections.Generic.Queue<Vertex>();
+            Dictionary<Vertex, Vertex> routes = new Dictionary<Vertex, Vertex>();
+            Queue<Vertex> queue = new Queue<Vertex>();
 
-            int i = IndexOf(VFrom);
-            if (i == -1) return path;
+            foreach (var item in vertex) item.Hit = false;
+            queue.Clear();
 
-            int j = IndexOf(VTo);
-            if (j == -1) return path;
+            var vertexFrom = vertex.ElementAt(VFrom);
+            var vertexTo = vertex.ElementAt(VTo);
 
-            vertex[i].Hit = true;
-            queue.Enqueue(vertex[i]);
+            vertexFrom.Hit = true;
+            queue.Enqueue(vertexFrom);
+            routes.Add(vertexFrom, vertexFrom);
 
-            StartBreadthFirstSearch(VTo, ref queue, ref path);
-            
-            return path.Last().Value == VTo ? path : null;
-        }
-        private void StartBreadthFirstSearch(int VTo, ref System.Collections.Generic.Queue<Vertex> queue, ref List<Vertex> path)
-        {
-            if (queue.Count == 0) return;
-            var v = queue.Dequeue();
-            path.Add(v);
-
-            GetVertexEdgesB(v, ref queue, ref path, VTo);
-
-            StartBreadthFirstSearch(VTo, ref queue, ref path);
-        }
-        private void GetVertexEdgesB(Vertex v, ref System.Collections.Generic.Queue<Vertex> queue, ref List<Vertex> path, int VTo)
-        {
-            for (int i = 0; i < vertex.Length; i++)
+            while (queue.Count > 0)
             {
-                if (vertex[i].Hit == true) continue;
+                var currentVertex = queue.Dequeue();
 
-                if (IsEdge(vertex[i].Value, v.Value))
+                var vertexNeighbors = GetVertexNeighbors(currentVertex)
+                    .OrderBy(u => u.Value)
+                    .ToList();
+
+                foreach (var item in vertexNeighbors)
                 {
-                    vertex[i].Hit = true;
-                    queue.Enqueue(vertex[i]);
-
-                    if (vertex[i].Value == VTo)
-                    {
-                        path.Add(vertex[i]);
-                        queue.Clear();
-                        break;
-                    }
+                    queue.Enqueue(item);
+                    routes.Add(item, currentVertex);
                 }
             }
+
+            return GetOptimalRoute(routes, vertexTo, vertexFrom);
+        }
+
+        private List<Vertex> GetOptimalRoute(Dictionary<Vertex, Vertex> routes, Vertex vertexTo, Vertex vertexFrom)
+        {
+            List<Vertex> route = new List<Vertex>();
+            Vertex current = vertexTo;
+            while (current != vertexFrom)
+            {
+                if (!routes.ContainsKey(current)) return new List<Vertex>();
+                {
+                    route.Add(current);
+                    current = routes[current];
+                }
+            }
+
+            route.Add(vertexFrom);
+            return route;
         }
 
         public List<Vertex> WeakVertices()
